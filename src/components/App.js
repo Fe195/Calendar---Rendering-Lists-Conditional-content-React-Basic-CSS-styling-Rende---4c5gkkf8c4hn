@@ -1,148 +1,151 @@
-const days = document.querySelector(".days");
-const weeks = document.querySelector(".weeks");
-const prev = document.querySelector(".prev-btn");
-const next = document.querySelector(".next-btn");
+var calendarNode = document.querySelector("#calendar");
 
-const daysName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const monthsName = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+var currDate = new Date();
+var currYear = currDate.getFullYear();
+var currMonth = currDate.getMonth() + 1;
 
-let selectedMonth = new Date().getMonth() + 1;
-let selectedYear = new Date().getFullYear();
-function generateLayout() {
-  for (let i = 0; i < daysName.length; i++) {
-    let box = document.createElement("div");
-    box.innerText = daysName[i];
-    box.classList.add("day");
-    days.appendChild(box);
-  }
+var selectedYear = currYear;
+var selectedMonth = currMonth;
+var selectedMonthName = getMonthName(selectedYear, selectedMonth);
+var selectedMonthDays = getDayCount(selectedYear, selectedMonth);
+
+renderDOM(selectedYear, selectedMonth);
+
+function getMonthName (year, month) {
+    let selectedDate = new Date(year, month-1, 1);
+    return selectedDate.toLocaleString('default', { month: 'long' });
 }
-generateLayout();
 
-function generateCalendar(selectedMonth, selectedYear) {
-  console.log("generate - ", selectedMonth, selectedYear);
-  weeks.innerHTML = "";
-  // detail.innerText = `${monthsName[selectedMonth - 1]}, ${selectedYear}`;
-  let noOfDays = new Date(selectedYear, selectedMonth, 0).getDate();
-  let firstDay = new Date(selectedYear, selectedMonth - 1, 1).getDay();
-  let filledDays = -(firstDay - 1);
-  while (filledDays < noOfDays) {1
-    generateRow();
-  }
-  function generateRow() {
-    const week = document.createElement("div");
-    week.style.display = "flex";
-    for (let i = 0; i < daysName.length; i++) {
-      let box = document.createElement("div");
-      box.classList.add("week");
-      week.appendChild(box);
-      if (filledDays <= noOfDays) {
-        if (filledDays > 0) {
-          box.innerText = filledDays;
-          const currentMonth = new Date().getMonth() + 1;
-          const currentYear = new Date().getFullYear();
+function getMonthText () {
+    if (selectedYear === currYear)
+        return selectedMonthName;
+    else
+        return selectedMonthName + ", " + selectedYear;
+}
 
-          if (currentMonth === selectedMonth && currentYear === selectedYear) {
-            const currentData = new Date().getDate();
-            if (filledDays === currentData) {
-              box.classList.add("today");
-            }
-          }
-        }
-        filledDays++;
-      }
+function getDayName (year, month, day) {
+    let selectedDate = new Date(year, month-1, day);
+    return selectedDate.toLocaleDateString('en-US',{weekday: 'long'});
+}
+
+function getDayCount (year, month) {
+    return 32 - new Date(year, month-1, 32).getDate();
+}
+
+function getDaysArray () {
+    let emptyFieldsCount = 0;
+    let emptyFields = [];
+    let days = [];
+
+    switch(getDayName(selectedYear, selectedMonth, 1))
+    {
+        case "Tuesday":
+            emptyFieldsCount = 1;
+            break;
+        case "Wednesday":
+            emptyFieldsCount = 2;
+            break;
+        case "Thursday":
+            emptyFieldsCount = 3;
+            break;
+        case "Friday":
+            emptyFieldsCount = 4;
+            break;
+        case "Saturday":
+            emptyFieldsCount = 5;
+            break;
+        case "Sunday":
+            emptyFieldsCount = 6;
+            break;
     }
-    weeks.appendChild(week);
-  }
+  
+    emptyFields = Array(emptyFieldsCount).fill("");
+    days = Array.from(Array(selectedMonthDays + 1).keys());
+    days.splice(0, 1);
+    
+    return emptyFields.concat(days);
 }
-generateCalendar(selectedMonth, selectedYear);
 
-prev.addEventListener("click", () => {
-  selectedMonth--;
-  if (selectedMonth === 0) {
-    selectedYear--;
-    selectedMonth = 12;
-  }
-  generateCalendar(selectedMonth, selectedYear);
-  monthSelect.value = selectedMonth - 1;
-  yearSelect.value = selectedYear;
-});
+function renderDOM (year, month) {
+  let newCalendarNode = document.createElement("div");
+  newCalendarNode.id = "calendar";
+  newCalendarNode.className = "calendar";
+  
+  let dateText = document.createElement("div");
+  dateText.append(getMonthText());
+  dateText.className = "date-text";
+  newCalendarNode.append(dateText);
+  
+  let leftArrow = document.createElement("div");
+  leftArrow.append("«");
+  leftArrow.className = "button";
+  leftArrow.addEventListener("click", goToPrevMonth);
+  newCalendarNode.append(leftArrow);
+  
+  let curr = document.createElement("div");
+  curr.append("📅");
+  curr.className = "button";
+  curr.addEventListener("click", goToCurrDate);
+  newCalendarNode.append(curr);
+  
+  let rightArrow = document.createElement("div");
+  rightArrow.append("»");
+  rightArrow.className = "button";
+  rightArrow.addEventListener("click", goToNextMonth);
+  newCalendarNode.append(rightArrow);
+  
+  let dayNames = ["M", "T", "W", "T", "F", "S", "S"];
+  
+  dayNames.forEach((cellText) => {
+    let cellNode = document.createElement("div");
+    cellNode.className = "cell cell--unselectable";
+    cellNode.append(cellText);
+    newCalendarNode.append(cellNode);
+  });
+  
+  let days = getDaysArray(year, month);
+  
+  days.forEach((cellText) => {
+    let cellNode = document.createElement("div");
+    cellNode.className = "cell";
+    cellNode.append(cellText);
+    newCalendarNode.append(cellNode);
+  });
+  
+  calendarNode.replaceWith(newCalendarNode);
+  calendarNode = document.querySelector("#calendar");
+}
 
-next.addEventListener("click", () => {
-  selectedMonth++;
-  if (selectedMonth === 13) {
-    selectedYear++;
-    selectedMonth = 1;
-  }
-  generateCalendar(selectedMonth, selectedYear);
-  monthSelect.value = selectedMonth - 1;
-  yearSelect.value = selectedYear;
-});
-
-const monthSelect = document.querySelector("#month-select");
-
-monthSelect.addEventListener("change", (e) => {
-  console.log(e.target.value);
-  selectedMonth = +e.target.value + 1;
-  generateCalendar(selectedMonth, selectedYear);
-})
-
-function generateMonthDropdown() {
-  const currentMonth = new Date().getMonth() + 1;
-  for (let i = 0; i < monthsName.length; i++) {
-    const month = monthsName[i];
-    const option = document.createElement("option");
-    option.setAttribute("value", i);
-    option.innerHTML = month;
-    if (i === currentMonth - 1) {
-      console.log(monthsName[i]);
-      option.setAttribute("selected", true);
+function goToPrevMonth () {
+    selectedMonth--;
+    if (selectedMonth === 0) {
+        selectedMonth = 12;
+        selectedYear--;
     }
-    monthSelect.appendChild(option);
-  }
+    selectedMonthDays = getDayCount(selectedYear, selectedMonth);
+    selectedMonthName = getMonthName(selectedYear, selectedMonth);
+  
+    renderDOM(selectedYear, selectedMonth);
 }
-generateMonthDropdown();
 
-const yearSelect = document.querySelector("#year-select");
-
-yearSelect.addEventListener("change", (e) => {
-  console.log(e.target.value);
-  selectedYear = e.target.value;
-  generateCalendar(selectedMonth, selectedYear);
-});
-
-function generateYearDropdown() {
-  const currentYear = new Date().getFullYear();
-  for (let i = 1990; i <= 2030; i++) {
-    const option = document.createElement("option");
-    option.setAttribute("value", i);
-    option.innerHTML = i;
-    if (i === currentYear) {
-      option.setAttribute("selected", true);
+function goToNextMonth () {
+    selectedMonth++;
+    if (selectedMonth === 13) {
+        selectedMonth = 0;
+        selectedYear++;
     }
-    yearSelect.appendChild(option);
-  }
+    selectedMonthDays = getDayCount(selectedYear, selectedMonth);
+    selectedMonthName = getMonthName(selectedYear, selectedMonth);
+  
+    renderDOM(selectedYear, selectedMonth);
 }
-generateYearDropdown();
 
-const todayBtn = document.querySelector("#today");
-todayBtn.addEventListener("click", () => {
-  selectedYear = new Date().getFullYear();
-  selectedMonth = new Date().getMonth() + 1;
-  monthSelect.value = selectedMonth - 1;
-  yearSelect.value = selectedYear;
+function goToCurrDate () {
+    selectedYear = currYear;
+    selectedMonth = currMonth;
 
-  generateCalendar(selectedMonth, selectedYear);
-});
+    selectedMonthDays = getDayCount(selectedYear, selectedMonth);
+    selectedMonthName = getMonthName(selectedYear, selectedMonth);
+  
+    renderDOM(selectedYear, selectedMonth);
+}
